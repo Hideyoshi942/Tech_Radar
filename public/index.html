@@ -239,7 +239,7 @@
         <kbd>/</kbd>
       </label>
       <div class="seg" id="window" role="group" aria-label="Time window">
-        <button data-v="1">24h</button><button data-v="7"><span class="l">7 days</span><span class="s">7d</span></button><button data-v="30"><span class="l">30 days</span><span class="s">30d</span></button>
+        <button data-v="1">24h</button><button data-v="7"><span class="l">7 days</span><span class="s">7d</span></button><button data-v="14"><span class="l">14 days</span><span class="s">14d</span></button><button data-v="30"><span class="l">30 days</span><span class="s">30d</span></button>
       </div>
       <div class="seg" id="sort" role="group" aria-label="Sort">
         <button data-v="hot" title="Engagement weighted by recency">Hot</button>
@@ -368,7 +368,7 @@ function render() {
   current = rest;
 
   $('featured-wrap').hidden = !showFeatured;
-  $('featured-note').textContent = { 1: 'last 24 hours', 7: 'this week', 30: 'this month' }[state.win];
+  $('featured-note').textContent = { 1: 'last 24 hours', 7: 'this week', 14: 'last 2 weeks', 30: 'this month' }[state.win];
   $('featured').innerHTML = featured.map((it, i) => {
     const text = summaryOf(it);
     return `<article class="feat">
@@ -475,8 +475,9 @@ async function fetchData(method = 'GET') {
 const resetPage = () => { shown = PAGE; save(); render(); };
 $('q').addEventListener('input', (e) => { state.q = e.target.value; resetPage(); });
 $('source').addEventListener('change', (e) => { state.source = e.target.value; resetPage(); });
-$('window').addEventListener('click', (e) => { if (e.target.dataset.v) { state.win = Number(e.target.dataset.v); resetPage(); } });
-$('sort').addEventListener('click', (e) => { if (e.target.dataset.v) { state.sort = e.target.dataset.v; resetPage(); } });
+// closest(): the click target can be a label <span> inside the button.
+$('window').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { state.win = Number(b.dataset.v); resetPage(); } });
+$('sort').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { state.sort = b.dataset.v; resetPage(); } });
 $('topics').addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) { state.topic = b.dataset.v; resetPage(); } });
 document.addEventListener('click', (e) => {
   const tag = e.target.closest('.tag');
