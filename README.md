@@ -19,7 +19,7 @@ Optional: set `GITHUB_TOKEN` for a higher GitHub API rate limit.
 
 ## Deploy: GitHub Actions + Pages (auto-updating, free)
 
-`.github/workflows/deploy.yml` runs `build.js` every 2 hours (and on every push to `main`, or manually via **Actions → Run workflow**). It:
+`.github/workflows/deploy.yml` runs `build.js` every 2 hours (and on every push to `develop`, or manually via **Actions → Run workflow**). It:
 
 1. downloads `store.json` from the live site, so the 30-day history carries over between runs,
 2. fetches every source and writes `dist/` (`index.html`, `data.json`, `store.json`),
@@ -29,7 +29,7 @@ There are no data commits. The repo only holds code. The same `index.html` detec
 
 One-time setup:
 
-1. Create a **public** GitHub repo (Pages on a free plan needs public) and push this folder to `main`.
+1. Create a **public** GitHub repo (Pages on a free plan needs public) and push this folder to `develop` (the default branch).
 2. In the repo, go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. Open **Actions → Build and deploy Tech Radar → Run workflow** for the first deploy. The site URL appears in the run summary (`https://<user>.github.io/<repo>/`).
 
