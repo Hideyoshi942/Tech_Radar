@@ -1,0 +1,15 @@
+{
+  "name": "tech-radar",
+  "version": "1.0.0",
+  "description": "Self-updating software tech news dashboard (HN, GitHub, Lobsters, RSS)",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --use-env-proxy server.js",
+    "fetch": "node --use-env-proxy server.js --fetch-only",
+    "build": "node --use-env-proxy build.js"
+  }
+}

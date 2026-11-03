@@ -1,0 +1,65 @@
+{
+  "port": 4321,
+  "refreshMinutes": 120,
+  "keepDays": 30,
+  "sources": {
+    "hackernews": { "enabled": true, "minPoints": 60 },
+    "github": { "enabled": true, "perPage": 40 },
+    "lobsters": { "enabled": true },
+    "rss": {
+      "enabled": true,
+      "feeds": [
+        { "id": "thenewstack", "label": "The New Stack", "url": "https://thenewstack.io/feed/" },
+        { "id": "infoq", "label": "InfoQ", "url": "https://feeds.feedburner.com/infoq" },
+        { "id": "devto", "label": "DEV Community", "url": "https://dev.to/feed" },
+        { "id": "aws-news", "label": "AWS What's New", "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/" },
+        { "id": "aws-blog", "label": "AWS News Blog", "url": "https://aws.amazon.com/blogs/aws/feed/" },
+        { "id": "gh-changelog", "label": "GitHub Changelog", "url": "https://github.blog/changelog/feed/" },
+        { "id": "spring", "label": "Spring Blog", "url": "https://spring.io/blog.atom" },
+        { "id": "fowler", "label": "Martin Fowler", "url": "https://martinfowler.com/feed.atom" }
+      ]
+    }
+  },
+  "topics": [
+    {
+      "id": "ai-coding",
+      "label": "AI coding",
+      "keywords": ["Claude Code", "Cursor", "Codex", "Copilot", "coding agent*", "AI agent*", "agentic", "MCP", "vibe coding", "AGENTS.md", "CLAUDE.md", "Windsurf", "Aider", "Cline", "Antigravity", "AI-generated", "AI slop", "code review"]
+    },
+    {
+      "id": "ai-models",
+      "label": "AI models",
+      "keywords": ["LLM*", "GPT*", "Claude", "Gemini", "Llama", "Qwen", "DeepSeek", "Mistral", "Anthropic", "OpenAI", "open weights", "open-weight", "fine-tun*", "inference", "transformer*", "RAG", "embedding*", "PyTorch"]
+    },
+    {
+      "id": "cloud",
+      "label": "Cloud & DevOps",
+      "keywords": ["AWS", "Amazon", "Lambda", "S3", "DynamoDB", "EC2", "ECS", "EKS", "Bedrock", "Azure", "GCP", "Google Cloud", "Kubernetes", "k8s", "serverless", "Terraform", "OpenTofu", "Docker", "container*", "CI/CD", "GitHub Actions", "observability", "OpenTelemetry"]
+    },
+    {
+      "id": "web",
+      "label": "Web & Frontend",
+      "keywords": ["React", "Next.js", "Vue", "Nuxt", "Angular", "Svelte", "TypeScript", "JavaScript", "CSS", "HTML", "browser*", "Vite", "Node.js", "Deno", "Bun", "WebAssembly", "Wasm", "frontend", "TanStack", "Chrome", "Firefox"]
+    },
+    {
+      "id": "backend",
+      "label": "Backend & Data",
+      "keywords": ["Java", "Spring", "Spring Boot", "Kotlin", "JVM", "Golang", "Go 1.*", "Rust", "Python", "PostgreSQL", "Postgres", "MySQL", "SQLite", "Redis", "Kafka", "database*", "SQL", "microservice*", "backend", "gRPC", "API*"]
+    },
+    {
+      "id": "security",
+      "label": "Security",
+      "keywords": ["security", "vulnerabilit*", "CVE*", "exploit*", "malware", "RCE", "breach*", "supply chain", "supply-chain", "zero-day", "0-day", "phishing", "prompt injection", "ransomware", "backdoor*", "hacked"]
+    },
+    {
+      "id": "career",
+      "label": "Career & Industry",
+      "keywords": ["layoff*", "hiring", "jobs", "job market", "interview*", "career*", "salary", "salaries", "remote work", "burnout", "junior", "senior engineer*", "engineering manager*", "productivity"]
+    },
+    {
+      "id": "languages",
+      "label": "Languages & Tools",
+      "keywords": ["compiler*", "programming language*", "Zig", "Rust", "Golang", "Python 3.*", "C++", "Swift", "Elixir", "Haskell", "OCaml", "Git", "Linux", "Ubuntu", "Windows", "macOS", "kernel", "IDE", "VS Code", "Neovim", "Emacs", "terminal", "release*", "open source", "open-source"]
+    }
+  ]
+}

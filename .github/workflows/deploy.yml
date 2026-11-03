@@ -1,0 +1,56 @@
+name: Build and deploy Tech Radar
+
+on:
+  schedule:
+    - cron: '17 */2 * * *'   # every 2 hours (UTC), at :17 to avoid the top-of-hour rush
+  workflow_dispatch:          # "Run workflow" button in the Actions tab
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # Carry the 30-day history over from the currently published site (absent on the first run).
+      - name: Restore previous data
+        run: |
+          mkdir -p data
+          curl -sfL "${{ steps.pages.outputs.base_url }}/store.json" -o data/items.json \
+            && echo "restored previous store" || echo "no previous store, starting fresh"
+
+      - name: Fetch sources and build site
+        run: node build.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

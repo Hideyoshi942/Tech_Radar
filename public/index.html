@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tech Radar</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #636b78; --line: #e3e6eb;
+    --accent: #2f6fe4; --accent-ink: #ffffff; --chip: #eef1f5; --hot: #e2552e; --ok: #1f9d55; --bad: #d23c3c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --panel: #171b21; --ink: #e7eaee; --muted: #8e97a5; --line: #262c35;
+      --accent: #5b93ff; --accent-ink: #0f1216; --chip: #212730; --hot: #ff7a52; --ok: #3cc47c; --bad: #ff6464;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: inherit; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .updated { color: var(--muted); font-size: 13px; }
+  .spacer { flex: 1; }
+  button, select, input { font: inherit; color: var(--ink); }
+  .btn { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn[disabled] { opacity: .6; cursor: wait; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .controls input[type=search] { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 7px 10px; }
+  .controls select { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 8px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { background: var(--bg); border: 0; padding: 6px 11px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--accent); color: var(--accent-ink); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 14px; }
+  .chip { background: var(--chip); border: 1px solid transparent; border-radius: 999px; padding: 4px 11px; cursor: pointer; font-size: 13px; }
+  .chip.on { background: var(--accent); color: var(--accent-ink); }
+  .chip .n { opacity: .7; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .list { list-style: none; margin: 0; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  .item { display: grid; grid-template-columns: 34px 1fr; gap: 4px 8px; padding: 12px 14px; border-top: 1px solid var(--line); }
+  .item:first-child { border-top: 0; }
+  .rank { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; padding-top: 1px; }
+  .title { font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+  .title:hover { color: var(--accent); }
+  .domain { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .summary { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+  .meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .meta a { color: var(--muted); }
+  .src { font-weight: 600; color: var(--ink); }
+  .pts { color: var(--hot); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tag { background: var(--chip); border-radius: 4px; padding: 0 6px; }
+  .more { display: block; margin: 14px auto 0; }
+  .empty { padding: 40px; text-align: center; color: var(--muted); }
+  .status { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 18px; font-size: 12px; color: var(--muted); }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 1px; }
+  @media (max-width: 560px) {
+    .item { grid-template-columns: 1fr; }
+    .rank { display: none; }
+    .controls { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tech Radar</h1>
+    <span class="updated" id="updated">Loading…</span>
+    <span class="spacer"></span>
+    <button class="btn" id="refresh" hidden>Refresh now</button>
+  </header>
+
+  <div class="controls">
+    <input type="search" id="q" placeholder="Search titles…">
+    <div class="seg" id="window">
+      <button data-v="1">24h</button><button data-v="7">7d</button><button data-v="30">30d</button>
+    </div>
+    <div class="seg" id="sort">
+      <button data-v="hot" title="Engagement weighted by recency">Hot</button>
+      <button data-v="top" title="Raw engagement">Top</button>
+      <button data-v="new">New</button>
+    </div>
+    <select id="source" aria-label="Source"></select>
+  </div>
+
+  <div class="chips" id="topics"></div>
+  <ul class="list" id="list"></ul>
+  <button class="btn more" id="more" hidden>Show more</button>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+const PAGE = 50;
+const state = load() || { q: '', win: 7, sort: 'hot', source: 'all', topic: 'all' };
+let data = { items: [], topics: [], status: {} };
+let shown = PAGE;
+
+function load() { try { return JSON.parse(localStorage.getItem('tech-radar')); } catch { return null; } }
+function save() { try { localStorage.setItem('tech-radar', JSON.stringify(state)); } catch {} }
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function ago(t) {
+  const m = Math.max(1, Math.round((Date.now() - t) / 60000));
+  if (m < 60) return m + 'm ago';
+  const h = Math.round(m / 60);
+  if (h < 48) return h + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+}
+function domain(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } }
+function hot(it) { const h = (Date.now() - it.time) / 3600000; return (it.engagement + 5) / Math.pow(h + 2, 1.2); }
+function sourceKey(it) { return it.source === 'rss' ? 'rss:' + it.sourceLabel : it.source; }
+
+function baseFiltered() {
+  const cutoff = Date.now() - state.win * 864e5;
+  const q = state.q.trim().toLowerCase();
+  return data.items.filter((it) =>
+    it.time >= cutoff &&
+    (state.source === 'all' || (state.source === 'rss' ? it.source === 'rss' : sourceKey(it) === state.source)) &&
+    (!q || (it.title + ' ' + (it.summary || '')).toLowerCase().includes(q)));
+}
+
+function render() {
+  for (const seg of ['window', 'sort']) {
+    const v = seg === 'window' ? String(state.win) : state.sort;
+    for (const b of $(seg).children) b.classList.toggle('on', b.dataset.v === v);
+  }
+  $('q').value = state.q;
+  $('source').value = state.source;
+
+  const base = baseFiltered();
+  // "All topics" means any tech topic; untagged items only show under "Other".
+  const isTech = (it) => !(it.tags.length === 1 && it.tags[0] === 'other');
+  const counts = { all: base.filter(isTech).length };
+  for (const it of base) for (const t of it.tags) counts[t] = (counts[t] || 0) + 1;
+  const topicLabel = Object.fromEntries(data.topics.map((t) => [t.id, t.label]));
+  $('topics').innerHTML = [{ id: 'all', label: 'All topics' }, ...data.topics]
+    .map((t) => `<button class="chip${state.topic === t.id ? ' on' : ''}" data-v="${t.id}">${esc(t.label)}<span class="n">${counts[t.id] || 0}</span></button>`)
+    .join('');
+
+  let items = state.topic === 'all' ? base.filter(isTech) : base.filter((it) => it.tags.includes(state.topic));
+  const key = { hot, top: (it) => it.engagement, new: (it) => it.time }[state.sort];
+  items = items.map((it) => [key(it), it]).sort((a, b) => b[0] - a[0]).map((x) => x[1]);
+
+  $('list').innerHTML = items.length ? items.slice(0, shown).map((it, i) => {
+    const d = domain(it.url);
+    const stats = it.source === 'github' ? `★ ${it.points.toLocaleString()}` :
+      it.source === 'rss' ? '' : `▲ ${it.points.toLocaleString()} · ${it.comments.toLocaleString()} comments`;
+    const discuss = it.discussUrl && it.discussUrl !== it.url ? `<a href="${esc(it.discussUrl)}" target="_blank" rel="noopener">discuss</a>` : '';
+    const also = (it.also || []).map((a) => `<a href="${esc(a.url)}" target="_blank" rel="noopener">also on ${esc(a.label)}${a.points ? ' (' + a.points + ')' : ''}</a>`).join('');
+    const tags = it.tags.filter((t) => t !== 'other').map((t) => `<span class="tag">${esc(topicLabel[t] || t)}</span>`).join('');
+    return `<li class="item">
+      <span class="rank">${i + 1}</span>
+      <div>
+        <a class="title" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>${d ? `<span class="domain">${esc(d)}</span>` : ''}
+        ${it.summary && it.source !== 'hackernews' ? `<div class="summary">${esc(it.summary.length > 220 ? it.summary.slice(0, 220) + '…' : it.summary)}</div>` : ''}
+        <div class="meta">
+          <span class="src">${esc(it.sourceLabel)}</span>
+          ${stats ? `<span class="pts">${stats}</span>` : ''}
+          <span>${ago(it.time)}</span>
+          ${discuss}${also}${tags}
+        </div>
+      </div>
+    </li>`;
+  }).join('') : '<li class="empty">Nothing matches these filters.</li>';
+  $('more').hidden = items.length <= shown;
+}
+
+function renderMeta() {
+  $('updated').textContent = data.updatedAt
+    ? `Updated ${ago(Date.parse(data.updatedAt))} · ${data.items.length.toLocaleString()} items` +
+      (data.refreshing ? ' · refreshing…' : '') + (data.mode === 'static' ? ' · auto-updates every 2h' : '')
+    : 'First fetch in progress…';
+  const labels = [...new Set(data.items.filter((i) => i.source === 'rss').map((i) => i.sourceLabel))].sort();
+  const opts = [['all', 'All sources'], ['hackernews', 'Hacker News'], ['github', 'GitHub'], ['lobsters', 'Lobsters'], ['rss', 'All RSS feeds'],
+    ...labels.map((l) => ['rss:' + l, '  ' + l])];
+  $('source').innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+  $('status').innerHTML = Object.entries(data.status || {}).map(([k, s]) =>
+    `<span title="${esc(s.ok ? s.count + ' items' : s.error)}"><span class="dot" style="background:var(${s.ok ? '--ok' : '--bad'})"></span>${esc(k)}</span>`).join('');
+}
+
+// Same page works in both modes: the local server answers data.json live,
+// GitHub Pages serves the data.json written by build.js.
+async function fetchData(method = 'GET') {
+  const res = await fetch(method === 'POST' ? 'api/refresh' : 'data.json', { method, cache: 'no-store' });
+  data = await res.json();
+  $('refresh').hidden = data.mode !== 'server';
+  renderMeta();
+  render();
+  if (data.mode === 'server' && (!data.updatedAt || data.refreshing)) setTimeout(fetchData, 4000);
+}
+
+$('q').addEventListener('input', (e) => { state.q = e.target.value; shown = PAGE; save(); render(); });
+$('source').addEventListener('change', (e) => { state.source = e.target.value; shown = PAGE; save(); render(); });
+$('window').addEventListener('click', (e) => { if (e.target.dataset.v) { state.win = Number(e.target.dataset.v); shown = PAGE; save(); render(); } });
+$('sort').addEventListener('click', (e) => { if (e.target.dataset.v) { state.sort = e.target.dataset.v; save(); render(); } });
+$('topics').addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) { state.topic = b.dataset.v; shown = PAGE; save(); render(); } });
+$('more').addEventListener('click', () => { shown += PAGE; render(); });
+$('refresh').addEventListener('click', async (e) => {
+  e.target.disabled = true; e.target.textContent = 'Refreshing…';
+  try { await fetchData('POST'); } finally { e.target.disabled = false; e.target.textContent = 'Refresh now'; }
+});
+
+fetchData();
+setInterval(fetchData, 10 * 60 * 1000);
+</script>
+</body>
+</html>
