@@ -2,6 +2,7 @@
   "port": 4321,
   "refreshMinutes": 120,
   "keepDays": 30,
+  "enrich": { "enabled": true, "limit": 300 },
   "sources": {
     "hackernews": { "enabled": true, "minPoints": 60 },
     "github": { "enabled": true, "perPage": 40 },

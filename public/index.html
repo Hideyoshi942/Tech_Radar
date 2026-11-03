@@ -45,7 +45,20 @@
   .title { font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
   .title:hover { color: var(--accent); }
   .domain { color: var(--muted); font-size: 12px; margin-left: 6px; }
-  .summary { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+  .summary { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .item:hover { background: var(--bg); }
+  .pop { position: fixed; z-index: 10; width: min(420px, calc(100vw - 32px)); background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; }
+  .pop.show { opacity: 1; transform: none; }
+  .pop h3 { font-size: 14px; margin: 0 0 6px; line-height: 1.35; }
+  .pop p { margin: 0; font-size: 13px; color: var(--ink); }
+  .pop p.none { color: var(--muted); font-style: italic; }
+  .pop .foot { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  /* Desktop: summary lives in the hover card. Touch: show it inline instead. */
+  @media (hover: hover) { .summary { display: none; } }
+  @media (hover: none) { .pop { display: none; } }
   .meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; margin-top: 4px; }
   .meta a { color: var(--muted); }
   .src { font-weight: 600; color: var(--ink); }
@@ -89,6 +102,7 @@
   <button class="btn more" id="more" hidden>Show more</button>
   <div class="status" id="status"></div>
 </div>
+<div class="pop" id="pop" role="tooltip"></div>
 
 <script>
 const PAGE = 50;
@@ -112,6 +126,29 @@ function ago(t) {
 function domain(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } }
 function hot(it) { const h = (Date.now() - it.time) / 3600000; return (it.engagement + 5) / Math.pow(h + 2, 1.2); }
 function sourceKey(it) { return it.source === 'rss' ? 'rss:' + it.sourceLabel : it.source; }
+function summaryOf(it) { return it.desc || it.summary || ''; }
+let current = [];
+
+// Hover card with the item's summary (desktop only; touch devices see it inline).
+let popTimer = null;
+let popFor = null;
+function showPop(li) {
+  const it = current[Number(li.dataset.i)];
+  if (!it) return;
+  const text = summaryOf(it);
+  const stats = it.source === 'github' ? `★ ${it.points.toLocaleString()}` :
+    it.source === 'rss' ? '' : `▲ ${it.points.toLocaleString()} · ${it.comments.toLocaleString()} comments`;
+  const pop = $('pop');
+  pop.innerHTML = `<h3>${esc(it.title)}</h3>` +
+    (text ? `<p>${esc(text)}</p>` : '<p class="none">No summary available for this link.</p>') +
+    `<div class="foot">${[domain(it.url), it.sourceLabel, stats, ago(it.time)].filter(Boolean).map(esc).join(' · ')}</div>`;
+  const r = li.querySelector('.title').getBoundingClientRect();
+  pop.style.left = Math.max(16, Math.min(r.left, innerWidth - pop.offsetWidth - 16)) + 'px';
+  const below = r.bottom + 8;
+  pop.style.top = (below + pop.offsetHeight > innerHeight - 8 ? Math.max(8, r.top - pop.offsetHeight - 8) : below) + 'px';
+  pop.classList.add('show');
+}
+function hidePop() { clearTimeout(popTimer); popFor = null; $('pop').classList.remove('show'); }
 
 function baseFiltered() {
   const cutoff = Date.now() - state.win * 864e5;
@@ -144,6 +181,7 @@ function render() {
   const key = { hot, top: (it) => it.engagement, new: (it) => it.time }[state.sort];
   items = items.map((it) => [key(it), it]).sort((a, b) => b[0] - a[0]).map((x) => x[1]);
 
+  current = items;
   $('list').innerHTML = items.length ? items.slice(0, shown).map((it, i) => {
     const d = domain(it.url);
     const stats = it.source === 'github' ? `★ ${it.points.toLocaleString()}` :
@@ -151,11 +189,12 @@ function render() {
     const discuss = it.discussUrl && it.discussUrl !== it.url ? `<a href="${esc(it.discussUrl)}" target="_blank" rel="noopener">discuss</a>` : '';
     const also = (it.also || []).map((a) => `<a href="${esc(a.url)}" target="_blank" rel="noopener">also on ${esc(a.label)}${a.points ? ' (' + a.points + ')' : ''}</a>`).join('');
     const tags = it.tags.filter((t) => t !== 'other').map((t) => `<span class="tag">${esc(topicLabel[t] || t)}</span>`).join('');
-    return `<li class="item">
+    const text = summaryOf(it);
+    return `<li class="item" data-i="${i}">
       <span class="rank">${i + 1}</span>
       <div>
         <a class="title" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a>${d ? `<span class="domain">${esc(d)}</span>` : ''}
-        ${it.summary && it.source !== 'hackernews' ? `<div class="summary">${esc(it.summary.length > 220 ? it.summary.slice(0, 220) + '…' : it.summary)}</div>` : ''}
+        ${text ? `<div class="summary">${esc(text)}</div>` : ''}
         <div class="meta">
           <span class="src">${esc(it.sourceLabel)}</span>
           ${stats ? `<span class="pts">${stats}</span>` : ''}
@@ -198,6 +237,15 @@ $('window').addEventListener('click', (e) => { if (e.target.dataset.v) { state.w
 $('sort').addEventListener('click', (e) => { if (e.target.dataset.v) { state.sort = e.target.dataset.v; save(); render(); } });
 $('topics').addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) { state.topic = b.dataset.v; shown = PAGE; save(); render(); } });
 $('more').addEventListener('click', () => { shown += PAGE; render(); });
+$('list').addEventListener('mouseover', (e) => {
+  const li = e.target.closest('.item');
+  if (!li || li === popFor) return;
+  hidePop();
+  popFor = li;
+  popTimer = setTimeout(() => showPop(li), 250);
+});
+$('list').addEventListener('mouseleave', hidePop);
+addEventListener('scroll', hidePop, { passive: true });
 $('refresh').addEventListener('click', async (e) => {
   e.target.disabled = true; e.target.textContent = 'Refreshing…';
   try { await fetchData('POST'); } finally { e.target.disabled = false; e.target.textContent = 'Refresh now'; }
