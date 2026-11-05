@@ -1,5 +1,5 @@
 // Static mode: fetch once, then write a self-contained site to dist/ (used by GitHub Actions -> Pages).
-//   dist/index.html  the dashboard
+//   dist/index.html  the dashboard (plus sw.js, manifest and icons for the installable app)
 //   dist/data.json   ranked items the page reads
 //   dist/store.json  raw cache; the next run downloads it so RSS history carries over
 import { copyFile, mkdir, writeFile } from 'node:fs/promises';
@@ -22,7 +22,9 @@ if (okSources === 0) {
 }
 
 await mkdir(DIST, { recursive: true });
-await copyFile(path.join(ROOT, 'public', 'index.html'), path.join(DIST, 'index.html'));
+for (const f of ['index.html', 'sw.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png']) {
+  await copyFile(path.join(ROOT, 'public', f), path.join(DIST, f));
+}
 await writeFile(path.join(DIST, 'data.json'), JSON.stringify(radar.payload('static')));
 await writeFile(path.join(DIST, 'store.json'), JSON.stringify(radar.store));
 console.log(`[build] wrote ${DIST}`);
